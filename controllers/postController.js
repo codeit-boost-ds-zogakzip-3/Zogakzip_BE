@@ -29,8 +29,8 @@ export const createPost = async (req, res) => {
 
     const savedPost = await newPost.save();
 
-    // 그룹의 posts_count 증가
-    group.posts_count += 1;
+    // 그룹의 postCount 증가
+    group.postCount += 1;
     await group.save();
 
     res.status(201).json(savedPost);
