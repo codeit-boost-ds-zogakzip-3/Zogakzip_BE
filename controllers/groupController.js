@@ -23,9 +23,9 @@ const checkBadges = async (groupId) => {
     updated = true;
   }
 
-  // 추억 수 20개 이상 등록 ** (테스트 위해 일단 2로 설정함)
+  // 추억 수 20개 이상 등록
   const totalPostCount = await Post.countDocuments({ group_id: groupId });
-  if (totalPostCount >= 2 && !group.badges.includes('추억 수 20개 이상 등록')) {
+  if (totalPostCount >= 20 && !group.badges.includes('추억 수 20개 이상 등록')) {
     group.badges.push('추억 수 20개 이상 등록');
     updated = true;
   }
@@ -36,16 +36,16 @@ const checkBadges = async (groupId) => {
     updated = true;
   }
 
-  // 그룹 공감 1만 개 이상 받기  ** (테스트 위해 일단 5로 설정함)
-  if (group.likeCount >= 5 && !group.badges.includes('그룹 공감 1만 개 이상 받기')) {
+  // 그룹 공감 1만 개 이상 받기
+  if (group.likeCount >= 10000 && !group.badges.includes('그룹 공감 1만 개 이상 받기')) {
     group.badges.push('그룹 공감 1만 개 이상 받기');
     updated = true;
   }
 
-  // 추억 공감 1만 개 이상 받기 ** (테스트 위해 일단 5로 설정함)
+  // 추억 공감 1만 개 이상 받기
   const memoryWith10kLikes = await Post.findOne({
     group_id: groupId,
-    likes: { $gte: 5 }
+    likes: { $gte: 10000 }
   });
 
   if (memoryWith10kLikes && !group.badges.includes('추억 공감 1만 개 이상 받기')) {

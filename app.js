@@ -1,6 +1,8 @@
 import express from 'express';
 import mongoose from 'mongoose';
-import { DATABASE_URL } from './env.js';
+import * as dotenv from 'dotenv';
+dotenv.config();
+import cors from 'cors';
 
 import postRoutes from './routes/postRoute.js';  // 게시글 라우트
 import groupRoutes from './routes/groupRoute.js';  // 그룹 라우트
@@ -13,9 +15,10 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json());  // JSON 파싱 미들웨어
+app.use(cors());
 
 // MongoDB 연결
-mongoose.connect(DATABASE_URL)
+mongoose.connect(process.env.DATABASE_URL)
   .then(async () => {
     console.log('Connected to DB');
 
