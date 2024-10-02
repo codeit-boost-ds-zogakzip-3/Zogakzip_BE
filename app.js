@@ -31,15 +31,15 @@ mongoose.connect(DATABASE_URL)
     console.error('Connection error:', err);
   });
 
-  // 라우트 설정
-  app.use('/api', postRoutes);
-  app.use('/api', groupRoutes);
-  app.use('/api', commentRoutes);
-  app.use('/api', imageRouter);
+// 라우트 설정
+app.use('/api', postRoutes);
+app.use('/api', groupRoutes);
+app.use('/api', commentRoutes);
+app.use('/api', imageRouter);
 
-  app.use('/images', express.static('images'));
-  
-  // 서버 시작
-  app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-  });
+app.use('/images', express.static('images'));
+
+// 서버 시작
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});

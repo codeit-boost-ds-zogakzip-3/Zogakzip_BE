@@ -8,7 +8,7 @@ const groupSchema = new mongoose.Schema({
   password: { type: String },
   likeCount: { type: Number, default: 0 },
   postCount: { type: Number, default: 0 },
-  badges: { type: Number, default: 0 },
+  badges: { type: [String], default: [] },
   createdAt: { type: Date, default: Date.now },
 });
 

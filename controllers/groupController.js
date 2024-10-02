@@ -1,4 +1,62 @@
 import Group from '../models/groupModel.js';
+import Post from '../models/postModel.js';
+
+// 그룹 배지 체크
+const checkBadges = async (groupId) => {
+  const group = await Group.findById(groupId);
+  if (!group) return;
+
+  let updated = false;
+  const today = new Date();
+  const createdAt = new Date(group.createdAt);
+  const daysPassed = Math.floor((today - createdAt) / (1000 * 60 * 60 * 24));
+
+  // 7일 연속 추억 등록
+  const last7Days = new Date(today.setDate(today.getDate() - 7));
+  const consecutivePosts = await Post.find({
+    group_id: groupId,
+    created_at: { $gte: last7Days }
+  });
+
+  if (consecutivePosts.length >= 7 && !group.badges.includes('7일 연속 추억 등록')) {
+    group.badges.push('7일 연속 추억 등록');
+    updated = true;
+  }
+
+  // 추억 수 20개 이상 등록 ** (테스트 위해 일단 2로 설정함)
+  const totalPostCount = await Post.countDocuments({ group_id: groupId });
+  if (totalPostCount >= 2 && !group.badges.includes('추억 수 20개 이상 등록')) {
+    group.badges.push('추억 수 20개 이상 등록');
+    updated = true;
+  }
+
+  // 그룹 생성 후 1년 달성
+  if (daysPassed >= 365 && !group.badges.includes('그룹 생성 후 1년 달성')) {
+    group.badges.push('그룹 생성 후 1년 달성');
+    updated = true;
+  }
+
+  // 그룹 공감 1만 개 이상 받기  ** (테스트 위해 일단 5로 설정함)
+  if (group.likeCount >= 5 && !group.badges.includes('그룹 공감 1만 개 이상 받기')) {
+    group.badges.push('그룹 공감 1만 개 이상 받기');
+    updated = true;
+  }
+
+  // 추억 공감 1만 개 이상 받기 ** (테스트 위해 일단 5로 설정함)
+  const memoryWith10kLikes = await Post.findOne({
+    group_id: groupId,
+    likes: { $gte: 5 }
+  });
+
+  if (memoryWith10kLikes && !group.badges.includes('추억 공감 1만 개 이상 받기')) {
+    group.badges.push('추억 공감 1만 개 이상 받기');
+    updated = true;
+  }
+
+  if (updated) {
+    await group.save();
+  }
+};
 
 // 그룹 생성
 export const createGroup = async (req, res) => {
@@ -7,7 +65,7 @@ export const createGroup = async (req, res) => {
   if (!name || !password || !imageUrl || typeof isPublic !== 'boolean' || !introduction) {
     return res.status(400).json({ message: '잘못된 요청입니다' });
   }
-  
+
   try {
     const newGroup = new Group({
       name,
@@ -17,6 +75,7 @@ export const createGroup = async (req, res) => {
       introduction
     });
     const savedGroup = await newGroup.save();
+
     res.status(201).json(savedGroup);
   } catch (error) {
     res.status(400).json({ message: '잘못된 요청입니다' });
@@ -59,24 +118,22 @@ export const getGroups = async (req, res) => {
       .skip(skip)
       .limit(parseInt(pageSize));
 
-    const data = groups.map(group => {
-      const createdAt = new Date(group.createdAt);
-      const today = new Date();
-      const daysPassed = Math.floor((today - createdAt) / (1000 * 60 * 60 * 24));
+    for (const group of groups) {
+      await checkBadges(group._id);
+    }
 
-      return {
-        id: group._id,
-        name: group.name,
-        imageUrl: group.imageUrl,
-        isPublic: group.isPublic,
-        likeCount: group.likeCount,
-        badgeCount: group.badges.length,
-        postCount: group.postCount,
-        createdAt: group.createdAt,
-        introduction: group.introduction,
-        daysPassed,
-      };
-    });
+    const data = groups.map(group => ({
+      id: group._id,
+      name: group.name,
+      imageUrl: group.imageUrl,
+      isPublic: group.isPublic,
+      likeCount: group.likeCount,
+      badgeCount: group.badges.length,
+      postCount: group.postCount,
+      createdAt: group.createdAt,
+      introduction: group.introduction,
+      badges: group.badges,
+    }));
 
     res.status(200).json({
       currentPage: page,
@@ -111,6 +168,9 @@ export const updateGroup = async (req, res) => {
     group.introduction = introduction || group.introduction;
 
     const updatedGroup = await group.save();
+
+    await checkBadges(group._id);
+
     res.status(200).json(updatedGroup);
   } catch (error) {
     res.status(400).json({ message: '잘못된 요청입니다' });
@@ -134,6 +194,7 @@ export const deleteGroup = async (req, res) => {
     }
 
     await Group.findByIdAndDelete(groupId);
+
     res.status(200).json({ message: '그룹 삭제 성공' });
   } catch (error) {
     res.status(400).json({ message: '잘못된 요청입니다' });
@@ -156,9 +217,7 @@ export const getGroupDetail = async (req, res) => {
       return res.status(403).json({ message: '비밀번호가 틀렸습니다' });
     }
 
-    const createdAt = new Date(group.createdAt);
-    const today = new Date();
-    const daysPassed = Math.floor((today - createdAt) / (1000 * 60 * 60 * 24));
+    await checkBadges(group._id);
 
     res.status(200).json({
       id: group._id,
@@ -169,8 +228,7 @@ export const getGroupDetail = async (req, res) => {
       postCount: group.postCount,
       createdAt: group.createdAt,
       introduction: group.introduction,
-      daysPassed,
-      memories: group.memories,
+      badges: group.badges,
     });
   } catch (error) {
     res.status(400).json({ message: '잘못된 요청입니다' });
