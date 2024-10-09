@@ -1,5 +1,6 @@
 import Post from '../models/postModel.js';
 import Group from '../models/groupModel.js';
+import Comment from '../models/commentModel.js';
 
 // 게시글 등록
 export const createPost = async (req, res) => {
@@ -78,12 +79,9 @@ export const getPostsByGroupId = async (req, res) => {
       .skip((page - 1) * pageSize)
       .limit(parseInt(pageSize));
 
-    // 결과 반환
-    res.status(200).json({
-      currentPage: parseInt(page),
-      totalPages,
-      totalItemCount,
-      data: posts.map(post => ({
+    const data = await Promise.all(posts.map(async (post) => {
+      const commentCount = await Comment.countDocuments({ post_id: post._id });  // 댓글 수 계산
+      return {
         id: post._id,
         nickname: post.nickname,
         title: post.title,
@@ -93,13 +91,21 @@ export const getPostsByGroupId = async (req, res) => {
         moment: post.memory_time,
         isPublic: post.is_public,
         likeCount: post.likes,
-        commentCount: post.comment_count,
+        commentCount: commentCount,  // 동적으로 계산한 댓글 수
         createdAt: post.created_at
-      }))
+      };
+    }));
+    // 결과 반환
+    res.status(200).json({
+      currentPage: parseInt(page),
+      totalPages,
+      totalItemCount,
+      data
     });
+    
   } catch (error) {
-    console.error(error);
-    res.status(400).json({ message: '잘못된 요청입니다' });
+    console.error("Error in getPostsByGroupId:", error);  // 에러 로그를 좀 더 상세히 출력
+    res.status(400).json({ message: '잘못된 요청입니다', error: error.message });
   }
 };
 
