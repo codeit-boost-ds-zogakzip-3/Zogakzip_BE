@@ -213,10 +213,6 @@ export const getGroupDetail = async (req, res) => {
       return res.status(404).json({ message: '존재하지 않습니다' });
     }
 
-    if (!group.isPublic && group.password !== password) {
-      return res.status(403).json({ message: '비밀번호가 틀렸습니다' });
-    }
-
     await checkBadges(group._id);
 
     res.status(200).json({
