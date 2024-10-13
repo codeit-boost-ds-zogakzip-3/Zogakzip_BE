@@ -15,7 +15,7 @@
 
 ## 📜 디렉토리 구조
 ```
-/ZOGAKZIP
+/zogakzip
 │
 ├── controllers
 │  ├── commentController.js
@@ -30,10 +30,11 @@
 ├── routes
 │  ├── commentRoute.js
 │  ├── groupRoute.js
+│  ├── imageRoute.js
 │  └── postRoute.js
 │
+├── .env
 ├── app.js
-├── env.js
 ├── package-lock.json
 └── package.json
 ```
