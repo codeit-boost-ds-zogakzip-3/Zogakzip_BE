@@ -6,12 +6,17 @@ import Comment from '../models/commentModel.js';
 export const createPost = async (req, res) => {
   try {
     const { groupId } = req.params;
-    const { nickname, title, image, content, tags, location, memory_time, is_public, password } = req.body;
+    const { nickname, title, image, content, tags, location, memory_time, is_public, password, groupPassword } = req.body;
 
     // 그룹이 존재하는지 확인
     const group = await Group.findById(groupId);
     if (!group) {
       return res.status(404).json({ message: 'Group not found' });
+    }
+
+    // 그룹 비밀번호 확인
+    if (group.password !== groupPassword) {
+      return res.status(403).json({ message: '그룹 비밀번호가 틀렸습니다' });
     }
 
     // 새로운 게시글 생성
